@@ -18,6 +18,22 @@ spring:
         format_sql: true
         show_sql: true
 
+  mail:
+    protocol: smtp
+    host: smtp.gmail.com
+    port: 587
+    username: alex.yb.dev@gmail.com
+    password: wtyo evjm qcix gudq
+    default-encoding: utf-8
+    properties:
+      debug: true
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 logging:
   level:
     com.finance.stockhub : debug
