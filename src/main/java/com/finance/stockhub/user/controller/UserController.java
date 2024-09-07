@@ -23,7 +23,10 @@ public class UserController {
 
     // 이메일 인증
     @PostMapping("/join/email-check")
-    public ResponseDto<EmailCheckResDto> checkEmail(@RequestBody @Valid EmailCheckReqDto emailCheckReqDto, BindingResult bindingResult) {
+    public ResponseDto<EmailCheckResDto> checkEmail(
+            @RequestBody @Valid EmailCheckReqDto emailCheckReqDto,
+            BindingResult bindingResult
+    ) {
         if (bindingResult.hasErrors()) {
             throw new GlobalException(ResponseCode.INVALID_REQUEST);
         }
