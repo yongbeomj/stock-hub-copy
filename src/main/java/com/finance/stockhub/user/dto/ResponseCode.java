@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ResponseCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "[ERROR] Invalid request"),
+    DUPLICATED_USER_EMAIL(HttpStatus.BAD_REQUEST, "[ERROR] The email already exists"),
+    INVALID_AUTH_CODE(HttpStatus.UNAUTHORIZED, "[ERROR] Invalid authentication code"),
 
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "[ERROR] Illegal Argument Exception"),
     SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "[ERROR] Runtime Exception");

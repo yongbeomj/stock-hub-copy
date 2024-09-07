@@ -5,7 +5,10 @@ import com.finance.stockhub.user.dto.ResponseCode;
 import com.finance.stockhub.user.dto.ResponseDto;
 import com.finance.stockhub.user.dto.user.EmailCheckReqDto;
 import com.finance.stockhub.user.dto.user.EmailCheckResDto;
+import com.finance.stockhub.user.dto.user.UserJoinReqDto;
+import com.finance.stockhub.user.dto.user.UserJoinResDto;
 import com.finance.stockhub.user.service.MailService;
+import com.finance.stockhub.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.BindingResult;
@@ -19,7 +22,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
+    private final UserService userService;
     private final MailService mailService;
+
+    // 회원가입
+    @PostMapping("/join")
+    public ResponseDto<UserJoinResDto> join(
+            @RequestBody @Valid UserJoinReqDto userJoinReqDto,
+            BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            throw new GlobalException(ResponseCode.INVALID_REQUEST);
+        }
+
+        UserJoinResDto userJoinResDto = userService.join(userJoinReqDto);
+        return ResponseDto.success(userJoinResDto);
+    }
 
     // 이메일 인증
     @PostMapping("/join/email-check")
