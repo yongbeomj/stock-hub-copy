@@ -14,9 +14,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MailService {
 
+    private static final String AUTH_PREFIX = "authcode:";
     private final JavaMailSender javaMailSender;
     private static int authNumber;
     private final Map<String, Integer> checkEmailMap = new HashMap<>();
+    private final RedisService redisService;
 
     // 인증 코드 생성
     public void createKey() {
@@ -66,6 +68,8 @@ public class MailService {
         if (storeNumber == null) {
             return false;
         }
+        // 인증 코드 redis 저장
+        redisService.setValues(AUTH_PREFIX + toEmail, authCode);
 
         return storeNumber == inputNumber;
     }
