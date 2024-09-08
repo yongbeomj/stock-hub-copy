@@ -24,7 +24,7 @@ public class UserJoinReqDto {
 
     private UserRole role;
 
-    private int authCode;
+    private String authCode;
 
     public User toEntity(String encodedPassword) {
         return User.builder()

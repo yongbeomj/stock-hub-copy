@@ -49,7 +49,7 @@ public class UserController {
             throw new GlobalException(ResponseCode.INVALID_REQUEST);
         }
 
-        int authCode = mailService.sendEmail(emailCheckReqDto.getEmail());
-        return ResponseDto.success(EmailCheckResDto.of(authCode));
+        String authCode = mailService.sendEmail(emailCheckReqDto.getEmail());
+        return ResponseDto.success(new EmailCheckResDto(authCode));
     }
 }
