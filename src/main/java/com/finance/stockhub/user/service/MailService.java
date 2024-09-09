@@ -7,38 +7,34 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 public class MailService {
 
+    private static final String AUTH_PREFIX = "authcode:";
+
     private final JavaMailSender javaMailSender;
-    private static int authNumber;
-    private final Map<String, Integer> checkEmailMap = new HashMap<>();
+    private final RedisService redisService;
 
     // 인증 코드 생성
-    public void createKey() {
-        authNumber = (int) (Math.random() * 899999) + 100000;
+    public String createCode() {
+        int randomNum = (int) (Math.random() * 899999) + 100000;
+        return String.valueOf(randomNum);
     }
 
     // 이메일 양식 생성
-    public MimeMessage createEmailForm(String email) {
-        createKey();
-
-        // 메일 형식
-        String fromEmail = "alex.yb.dev@gmail.com";
-        String toEmail = email;
-        String title = "StockHub 회원가입 인증번호";
-        String contents = "";
-        contents += "<h3>" + "요청하신 인증 번호입니다." + "</h3>";
-        contents += "<h1>" + authNumber + "</h1>";
-        contents += "<h3>" + "감사합니다." + "</h3>";
-
+    public MimeMessage createEmailForm(String email, String authCode) {
         MimeMessage message = javaMailSender.createMimeMessage();
 
         try {
+            String fromEmail = "alex.yb.dev@gmail.com";
+            String toEmail = email;
+            String title = "StockHub 회원가입 인증번호";
+            String contents = "";
+            contents += "<h3>" + "요청하신 인증 번호입니다." + "</h3>";
+            contents += "<h1>" + authCode + "</h1>";
+            contents += "<h3>" + "감사합니다." + "</h3>";
+
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(fromEmail); // 발신자 이메일
             helper.setTo(toEmail); // 수신자 이메일
@@ -52,21 +48,14 @@ public class MailService {
     }
 
     // 이메일 발신 (인증코드 발신)
-    public int sendEmail(String toEmail) {
-        MimeMessage emailForm = createEmailForm(toEmail);
-        javaMailSender.send(emailForm);
-        checkEmailMap.put(toEmail, authNumber);
+    public String sendEmail(String toEmail) {
+        String authCode = createCode();
+        MimeMessage form = createEmailForm(toEmail, authCode);
+        javaMailSender.send(form);
 
-        return authNumber;
-    }
+        // 인증 코드 redis 저장
+        redisService.setValues(AUTH_PREFIX + toEmail, authCode);
 
-    // 인증 번호 일치 여부
-    public boolean isAuthNumber(String email, int inputNumber) {
-        Integer storeNumber = checkEmailMap.get(email);
-        if (storeNumber == null) {
-            return false;
-        }
-
-        return storeNumber == inputNumber;
+        return authCode;
     }
 }
