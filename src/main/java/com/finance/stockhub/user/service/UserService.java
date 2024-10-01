@@ -20,19 +20,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final RedisService redisService;
 
-    // 회원가입
     @Transactional
     public UserJoinResDto join(UserJoinReqDto userJoinReqDto) {
-        // 계정 중복 체크
         checkDuplicatedEmail(userJoinReqDto.getEmail());
-
-        // 인증번호 일치 여부
         isVerifiedCode(userJoinReqDto.getEmail(), userJoinReqDto.getAuthCode());
 
-        // password 암호화
         String encodedPassword = encodePassword(userJoinReqDto.getPassword());
-
-        // 회원가입
         User user = userRepository.save(userJoinReqDto.toEntity(encodedPassword));
 
         return new UserJoinResDto(user);

@@ -25,7 +25,6 @@ public class UserController {
     private final UserService userService;
     private final MailService mailService;
 
-    // 회원가입
     @PostMapping("/join")
     public ResponseDto<UserJoinResDto> join(
             @RequestBody @Valid UserJoinReqDto userJoinReqDto,
@@ -39,7 +38,6 @@ public class UserController {
         return ResponseDto.success(userJoinResDto);
     }
 
-    // 이메일 인증
     @PostMapping("/join/email-check")
     public ResponseDto<EmailCheckResDto> checkEmail(
             @RequestBody @Valid EmailCheckReqDto emailCheckReqDto,

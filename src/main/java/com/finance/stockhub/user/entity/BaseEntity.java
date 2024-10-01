@@ -19,16 +19,16 @@ public abstract class BaseEntity {
 
     @CreatedDate
     @Column(updatable = false)
-    private LocalDateTime createdAt; // 생성일시
+    private LocalDateTime createdAt;
 
     @CreatedBy
     @Column(updatable = false)
-    private String createdBy; // 생성자
+    private String createdBy;
 
     @LastModifiedDate
-    private LocalDateTime updatedAt; // 수정일시
+    private LocalDateTime updatedAt;
 
     @LastModifiedBy
-    private String updatedBy; // 수정자
+    private String updatedBy;
 
 }
