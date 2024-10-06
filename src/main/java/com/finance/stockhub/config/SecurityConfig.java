@@ -1,5 +1,8 @@
 package com.finance.stockhub.config;
 
+import com.finance.stockhub.config.auth.CustomUserDetailsService;
+import com.finance.stockhub.config.jwt.*;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -11,14 +14,16 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     private final Logger log = LoggerFactory.getLogger(getClass());
+    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService userDetailsService;
+    private final CorsConfig corsConfig;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -29,35 +34,27 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers((header) -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .cors((cors) -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+
+                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling((exceptionConfig) ->
-                        exceptionConfig.authenticationEntryPoint(((request, response, authException) -> {
 
-                        }))
+                .exceptionHandling((exception) -> exception
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                        .accessDeniedHandler(new JwtAccessDeniedHandler())
                 )
+
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/**").permitAll()
+                        .requestMatchers("/api/v1/users/join/**").permitAll()
+                        .requestMatchers("/api/v1/users/login/**").permitAll()
                         .anyRequest().authenticated()
-                );
+                )
+
+                .addFilterBefore(new JwtTokenFilter(jwtTokenProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // CORS 설정
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedHeader(("*"));
-        configuration.addAllowedMethod(("*"));
-        configuration.addAllowedOriginPattern("*");
-        configuration.setAllowCredentials(true);
-        configuration.addExposedHeader("Authorization");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
 }

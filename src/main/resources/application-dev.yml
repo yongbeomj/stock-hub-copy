@@ -41,5 +41,13 @@ spring:
 
 logging:
   level:
-    com.finance.stockhub : debug
+    com.finance : debug
     org.hibernate.type : trace
+
+jwt:
+  header: Authorization
+  secret: asdDfas89123askdklAJSdfszdvnakldeiqsa52135azdwvdabvss214346acxvqionvnkaskldfkaskfweinifnasdjnviowe4234nefgjSDDNFKSJDN2
+  access-token:
+    expiration: 1800000 # 30분
+  refresh-token:
+    expiration: 604800000 # 7일
