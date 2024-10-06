@@ -3,19 +3,14 @@ package com.finance.stockhub.user.controller;
 import com.finance.stockhub.exception.GlobalException;
 import com.finance.stockhub.user.dto.ResponseCode;
 import com.finance.stockhub.user.dto.ResponseDto;
-import com.finance.stockhub.user.dto.user.EmailCheckReqDto;
-import com.finance.stockhub.user.dto.user.EmailCheckResDto;
-import com.finance.stockhub.user.dto.user.UserJoinReqDto;
-import com.finance.stockhub.user.dto.user.UserJoinResDto;
+import com.finance.stockhub.user.dto.user.*;
 import com.finance.stockhub.user.service.MailService;
 import com.finance.stockhub.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/api/v1/users")
 @RestController
@@ -49,5 +44,28 @@ public class UserController {
 
         String authCode = mailService.sendEmail(emailCheckReqDto.getEmail());
         return ResponseDto.success(new EmailCheckResDto(authCode));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @RequestBody @Valid UserLoginReqDto userLoginReqDto,
+            BindingResult bindingResult
+            ) {
+        if (bindingResult.hasErrors()) {
+            throw new GlobalException(ResponseCode.INVALID_REQUEST);
+        }
+
+        UserLoginResDto userLoginResDto =  userService.login(userLoginReqDto);
+
+        return ResponseEntity.ok().body(ResponseDto.success(userLoginResDto));
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test(
+
+    ) {
+        System.out.println("test controller");
+
+        return ResponseEntity.ok().body(ResponseDto.success());
     }
 }

@@ -1,9 +1,14 @@
 package com.finance.stockhub.user.service;
 
+import com.finance.stockhub.config.auth.CustomUserDetails;
+import com.finance.stockhub.config.auth.CustomUserDetailsService;
+import com.finance.stockhub.config.jwt.JwtTokenProvider;
 import com.finance.stockhub.exception.GlobalException;
 import com.finance.stockhub.user.dto.ResponseCode;
 import com.finance.stockhub.user.dto.user.UserJoinReqDto;
 import com.finance.stockhub.user.dto.user.UserJoinResDto;
+import com.finance.stockhub.user.dto.user.UserLoginReqDto;
+import com.finance.stockhub.user.dto.user.UserLoginResDto;
 import com.finance.stockhub.user.entity.User;
 import com.finance.stockhub.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -19,11 +24,13 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RedisService redisService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService userDetailsService;
 
     @Transactional
     public UserJoinResDto join(UserJoinReqDto userJoinReqDto) {
-        checkDuplicatedEmail(userJoinReqDto.getEmail());
-        isVerifiedCode(userJoinReqDto.getEmail(), userJoinReqDto.getAuthCode());
+//        checkDuplicatedEmail(userJoinReqDto.getEmail());
+//        isVerifiedCode(userJoinReqDto.getEmail(), userJoinReqDto.getAuthCode());
 
         String encodedPassword = encodePassword(userJoinReqDto.getPassword());
         User user = userRepository.save(userJoinReqDto.toEntity(encodedPassword));
@@ -51,5 +58,17 @@ public class UserService {
 
     public String encodePassword(String password) {
         return passwordEncoder.encode(password);
+    }
+
+    public UserLoginResDto login(UserLoginReqDto userLoginReqDto) {
+        CustomUserDetails userDetails = userDetailsService.loadUserByUsername(userLoginReqDto.getEmail());
+
+        if (!passwordEncoder.matches(userLoginReqDto.getPassword(), userDetails.getPassword())) {
+            throw new GlobalException(ResponseCode.INVALID_PASSWORD);
+        }
+
+        String accessToken = jwtTokenProvider.create(userDetails);
+
+        return UserLoginResDto.of(userLoginReqDto.getEmail(), accessToken);
     }
 }
