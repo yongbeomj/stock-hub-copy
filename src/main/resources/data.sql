@@ -1,0 +1,1 @@
+insert into tb_user (email, password, name, role, created_at, created_by, updated_at, updated_by) values ('test@test.com', '$2a$10$DhaN6fSgns6YVEQWSAH98.lX.aqnILSaKwb4oxd/OSZTjAEDgn6MS', 'Roley', 'USER', '2024-06-14 17:48:44', 'Roley Teggin', '2024-04-10 14:46:44', 'Roley Jacqueminet');
