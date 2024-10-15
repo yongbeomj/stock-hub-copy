@@ -50,12 +50,12 @@ public class UserController {
     public ResponseEntity<?> login(
             @RequestBody @Valid UserLoginReqDto userLoginReqDto,
             BindingResult bindingResult
-            ) {
+    ) {
         if (bindingResult.hasErrors()) {
             throw new GlobalException(ResponseCode.INVALID_REQUEST);
         }
 
-        UserLoginResDto userLoginResDto =  userService.login(userLoginReqDto);
+        UserLoginResDto userLoginResDto = userService.login(userLoginReqDto);
 
         return ResponseEntity.ok().body(ResponseDto.success(userLoginResDto));
     }

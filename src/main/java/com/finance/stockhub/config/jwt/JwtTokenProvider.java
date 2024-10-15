@@ -2,7 +2,6 @@ package com.finance.stockhub.config.jwt;
 
 import com.finance.stockhub.config.auth.CustomUserDetails;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -18,47 +18,64 @@ import java.util.Date;
 public class JwtTokenProvider {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private static final String AUTHORITIES_KEY = "auth";
-    private static final String TOKEN_PRIFIX = "Bearer ";
+    @Value("${jwt.secret-key.access}")
+    private String ACCESS_SECRET_KEY;
+
+    @Value("${jwt.secret-key.refresh}")
+    private String REFRESH_SECRET_KEY;
+
     @Value("${jwt.access-token.expiration}")
     private long ACCESS_TOKEN_EXPIRE_TIME;
+
     @Value("${jwt.refresh-token.expiration}")
     private long REFRESH_TOKEN_EXPIRE_TIME;
 
-    private final Key key;
-
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        this.key = Keys.hmacShaKeyFor(keyBytes);
+    private Key getKey(String secretKey) {
+        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String create(CustomUserDetails userDetails) {
+    public String createToken(CustomUserDetails userDetails, JwtTokenType tokenType) {
         Claims claims = Jwts.claims();
         claims.put("email", userDetails.getUsername());
+
+        String secretKey = ACCESS_SECRET_KEY;
+        long expiredTime = ACCESS_TOKEN_EXPIRE_TIME;
+
+        if (tokenType.equals(JwtTokenType.REFRESH)) {
+            secretKey = REFRESH_SECRET_KEY;
+            expiredTime = REFRESH_TOKEN_EXPIRE_TIME;
+        }
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRE_TIME))
-                .signWith(key, SignatureAlgorithm.HS512)
+                .setExpiration(new Date(System.currentTimeMillis() + expiredTime))
+                .signWith(getKey(secretKey), SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    private Claims parseClaims(String token) {
+    private Claims parseClaims(String token, JwtTokenType tokenType) {
+        String secretKey = ACCESS_SECRET_KEY;
+
+        if (tokenType == JwtTokenType.REFRESH) {
+            secretKey = REFRESH_SECRET_KEY;
+        }
+
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(getKey(secretKey))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    public String getEmail(String token) {
-        return parseClaims(token).get("email", String.class);
+    public String getEmail(String token, JwtTokenType tokenType) {
+        return parseClaims(token, tokenType).get("email", String.class);
     }
 
-    public boolean validateToken(String token) {
+    public boolean validateToken(String token, JwtTokenType tokenType) {
         try {
-            parseClaims(token);
+            parseClaims(token, tokenType);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.error("잘못된 JWT 서명입니다");
@@ -72,6 +89,5 @@ public class JwtTokenProvider {
 
         return false;
     }
-
 
 }
