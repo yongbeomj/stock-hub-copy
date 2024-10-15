@@ -3,6 +3,7 @@ package com.finance.stockhub.user.service;
 import com.finance.stockhub.config.auth.CustomUserDetails;
 import com.finance.stockhub.config.auth.CustomUserDetailsService;
 import com.finance.stockhub.config.jwt.JwtTokenProvider;
+import com.finance.stockhub.config.jwt.JwtTokenType;
 import com.finance.stockhub.exception.GlobalException;
 import com.finance.stockhub.user.dto.ResponseCode;
 import com.finance.stockhub.user.dto.user.UserJoinReqDto;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserService {
     private static final String AUTH_PREFIX = "authcode:";
+    private static final String REFRESH_TOKEN_PREFIX = "ref:";
 
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
@@ -29,8 +31,8 @@ public class UserService {
 
     @Transactional
     public UserJoinResDto join(UserJoinReqDto userJoinReqDto) {
-//        checkDuplicatedEmail(userJoinReqDto.getEmail());
-//        isVerifiedCode(userJoinReqDto.getEmail(), userJoinReqDto.getAuthCode());
+        checkDuplicatedEmail(userJoinReqDto.getEmail());
+        isVerifiedCode(userJoinReqDto.getEmail(), userJoinReqDto.getAuthCode());
 
         String encodedPassword = encodePassword(userJoinReqDto.getPassword());
         User user = userRepository.save(userJoinReqDto.toEntity(encodedPassword));
@@ -67,8 +69,13 @@ public class UserService {
             throw new GlobalException(ResponseCode.INVALID_PASSWORD);
         }
 
-        String accessToken = jwtTokenProvider.create(userDetails);
+        // accesstoken 발급
+        String accessToken = jwtTokenProvider.createToken(userDetails, JwtTokenType.ACCESS);
+        // refreshtoken 발급
+        String refreshToken = jwtTokenProvider.createToken(userDetails, JwtTokenType.REFRESH);
 
-        return UserLoginResDto.of(userLoginReqDto.getEmail(), accessToken);
+        // redis 저장
+
+        return UserLoginResDto.of(userDetails.getUsername(), accessToken, refreshToken);
     }
 }
